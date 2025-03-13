@@ -5,8 +5,10 @@ import java.util.List;
 import org.healthcare.appointment.dto.Appointment;
 import org.healthcare.patient.entity.Patient;
 import org.healthcare.patient.exception.PatientNotFoundException;
+import org.healthcare.patient.openfeign.OpenfeignClient;
 import org.healthcare.patient.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -28,6 +30,10 @@ public class PatientRestController {
 	
 	@Autowired
 	private PatientService service;
+	@Value("${app.appointment.url}")
+	private String appointmentUrl;
+	@Autowired
+	private OpenfeignClient client;
 	
 	@ResponseStatus(code=HttpStatus.OK)
 	@GetMapping
@@ -55,14 +61,20 @@ public class PatientRestController {
 	
 //	1. Fetch list of all appointments for one Patient
 	@GetMapping(value="/patientAppointments" , params="patientId")
-	public List<Appointment> getAppointmentsForOnePatient(@RequestParam int patientId) {		
-		List<Appointment> a = RestClient.builder()
-				.baseUrl("http://localhost:8092/api/appointment")
-				.build()
-				.get()
-				.uri("?patientId="+patientId)
-				.retrieve()
-				.body(new ParameterizedTypeReference<List<Appointment>>() {});
+	public List<Appointment> getAppointmentsForOnePatient(@RequestParam int patientId) {	
+		
+//		---Using RestClient----
+//		List<Appointment> a = RestClient.builder()
+//				.baseUrl(appointmentUrl)
+//				.build()
+//				.get()
+//				.uri("?patientId="+patientId)
+//				.retrieve()
+//				.body(new ParameterizedTypeReference<List<Appointment>>() {});
+		
+//		---Using Spring Cloud---
+		List<Appointment> a = client.getByPatientId(patientId);
+		
 		return a;
 	}
 	
